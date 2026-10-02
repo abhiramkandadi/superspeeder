@@ -42,7 +42,7 @@ uv sync                      # or: pip install -e .
 uv run python backend/app.py # serves http://localhost:8000
 ```
 
-Then open <http://localhost:8000> and upload CSVs. Sample files (`demo_speed_cameras.csv`, `demo_traffic_violations.csv`, 200 rows each) are described in `docs/DATA.md`; check that they and the DuckDB file are present in your checkout, since upstream trimmed some seed data. Tests: `uv run pytest backend/tests`.
+Then open <http://localhost:8000> and upload CSVs. The sample CSVs and DuckDB file described in `docs/DATA.md` are not committed to the branch (upstream removed seed data), so you must supply your own speed-camera and violation CSVs. Tests: `uv run pytest backend/tests`.
 
 Further docs on the `quackhacks` branch: `docs/BACKEND.md`, `docs/FRONTEND.md`, `docs/DATA.md`, `docs/NOTEBOOKS.md`.
 
