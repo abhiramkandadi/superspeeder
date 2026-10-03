@@ -2,7 +2,7 @@
 
 A dashboard that flags New York drivers who would trigger mandatory Intelligent Speed Assistance (ISA, "speed limiter") installation under NY bill [A.2299 / S.4045](https://www.nysenate.gov/legislation/bills/2025/S4045/amendment/A), and surfaces drivers who are close to the line. It was built for the **DSSG-NYC Transportation Safety Hackathon** (Families for Safe Streets), where it took **1st place** (December 2025).
 
-> **Where the code is:** the dashboard lives on the [`quackhacks`](../../tree/quackhacks) branch (a UI-only earlier version is on `demo_ui`). `main` holds the original hackathon starter material (task brief, notebook, point-value seeds).
+> **Branches:** the dashboard code is on the default branch, `quackhacks`. A UI-only earlier version is on `demo_ui`, and `main` holds the original hackathon starter material (task brief, notebook, point-value seeds).
 
 ## What the dashboard does
 
@@ -20,12 +20,12 @@ From `backend/src/super_speeder_detector.py`:
 | Rule | Threshold | Window |
 |---|---|---|
 | Speed-camera tickets | 16 or more | trailing 12 months |
-| Speed-related license points | 11 or more | trailing 18 months (see note) |
+| Speed-related license points | 11 or more | trailing 18 months |
 | Warning band | within 2 tickets or 2 points below either threshold | same windows |
 
 A driver who meets either threshold is a super speeder. Warning-band drivers are reported with how many tickets or points remain until the threshold.
 
-**Note on the points window:** the bill text, as summarized in the hackathon brief, describes 11 points within 24 months. The code uses 18 months, so treat the points rule here as a configurable approximation (`POINTS_WINDOW_MONTHS`) rather than a verbatim implementation of the bill. Windows are computed as months x 30 days.
+These match the bill as amended (S4045C): 11 or more license points within 18 months, or 16 or more speed-camera tickets within 12 months. Windows are computed as months x 30 days and are configurable via `POINTS_WINDOW_MONTHS` and `CAMERA_TICKET_WINDOW_MONTHS`.
 
 ## Stack
 
@@ -37,20 +37,19 @@ A driver who meets either threshold is a super speeder. Warning-band drivers are
 ## How to run
 
 ```bash
-git checkout quackhacks
 uv sync                      # or: pip install -e .
 uv run python backend/app.py # serves http://localhost:8000
 ```
 
 Then open <http://localhost:8000> and upload CSVs. The sample CSVs and DuckDB file described in `docs/DATA.md` are not committed to the branch (upstream removed seed data), so you must supply your own speed-camera and violation CSVs. Tests: `uv run pytest backend/tests`.
 
-Further docs on the `quackhacks` branch: `docs/BACKEND.md`, `docs/FRONTEND.md`, `docs/DATA.md`, `docs/NOTEBOOKS.md`.
+Further docs: `docs/BACKEND.md`, `docs/FRONTEND.md`, `docs/DATA.md`, `docs/NOTEBOOKS.md`.
 
 ## Contributions
 
-Built jointly by Abhiram Kandadi and Shrikar Swami. Commits are under Shrikar's account because we paired over VS Code Remote on a single machine during the event.
+Abhiram Kandadi built the detection logic and policy threshold implementation. Shrikar Swami built the backend and dashboard UI. Commits are under Shrikar's account because we paired over VS Code Remote on a single machine during the event.
 
-The upstream commit history also credits other hackathon teammates as co-authors (GitHub handles: Akash Lal, Dman320, SrinidhiPalani, RaghavNanavati, Daksh Aggarwal), and DSSG-NYC organizers wrote the original brief and starter material.
+1st place, DSSG-NYC Transportation Safety Hackathon, December 2025.
 
 ## Upstream attribution
 
