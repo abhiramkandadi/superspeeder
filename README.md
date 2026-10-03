@@ -1,164 +1,56 @@
-# Stop-Super-Speeders-Hackathon
-Families for Safe Streets - DSSG NYC: building a public transportation alert and warning system for New York State and city DMVs to alert super speeders violations.
+# Super-Speeder Policy Dashboard
 
-### Background:
+A dashboard that flags New York drivers who would trigger mandatory Intelligent Speed Assistance (ISA, "speed limiter") installation under NY bill [A.2299 / S.4045](https://www.nysenate.gov/legislation/bills/2025/S4045/amendment/A), and surfaces drivers who are close to the line. It was built for the **DSSG-NYC Transportation Safety Hackathon** (Families for Safe Streets), where it took **1st place** (December 2025).
 
-Intelligent Speed Assistance (ISA) devices are used to monitor the driving speeds of vehicles they installed. They are commonly referred to as “speed limiters” due to often being used with high-risk drivers.
+> **Branches:** the dashboard code is on the default branch, `quackhacks`. A UI-only earlier version is on `demo_ui`, and `main` holds the original hackathon starter material (task brief, notebook, point-value seeds).
 
-NYCDOT’s study of drivers concluded that those with 16 or more speed safety camera violations are twice as likely to kill. Bill ([A.2299/S.4045](https://www.nysenate.gov/legislation/bills/2025/S4045/amendment/A)) proposes mandatory installation of ISA devices for drivers accumulating 11 or more points within a 24-month period, or receiving sixteen or more speed-camera tickets within 12 months. Such individuals must install a speed limiter in any vehicle they own or operate for at least 12 months. The Senate version of this bill passed in 2025, but the Assembly needs to approve this in 2026. 
-The goal of this hackathon is to simulate the creation of an end to end data management system for monitoring driver license plates and drivers ids that would trigger the installation of an ISA device. Participants are to create a lightweight, versatile system that can be used to simulate how different NYC counties and agencies could easily run this system themselves.
+## What the dashboard does
 
+1. **Upload** speed-camera and traffic-violation CSVs through a web page.
+2. **Clean and load** them: columns are normalized, bad rows dropped, and the result is loaded into a DuckDB warehouse (`fct_violations`, `dim_driver`, and related tables; schema in `backend/sql/01_schema.sql`).
+3. **Detect** super speeders and warning-band drivers with SQL over the warehouse.
+4. **Display** results in a tabbed UI: a results table, an Analytics and Summary tab, per-driver detail pages (`/driver/{id}`), and a resources page for policy staff.
 
+The intended audience is legislative and DMV policy staff, not data engineers.
 
-## Prerequisites: TODOs before the hackathon
-- Complete volunteer [registration](http://www.nyc-dssg.org) on DSSG-NYC website
-- Join DSSG-NYC [Slack Group](https://join.slack.com/t/nyc-dssg/shared_invite/zt-3fhzyi936-hDjiJn05j9EKY3BH9YjXgQ)
-- Review DSSG [Anti-harassment Policy](https://github.com/dssg/hitchhikers-guide/blob/master/sources/dssg-manual/conduct-culture-and-communications/README.md), and [ethical standards](https://dssgfellowship.org/2015/09/18/an-ethical-checklist-for-data-science/)
-- Review Family for Safe Streets Problem Statement: https://www.familiesforsafestreets.org/about
-- Review [Data Mapping Documentation and Architecture](https://docs.google.com/document/d/17KtxoxqKwIKNLGwd1zQ5g4ZBZgqkQ4PuH2VLyByReq4/edit?usp=sharing)
+## Thresholds implemented
 
+From `backend/src/super_speeder_detector.py`:
 
+| Rule | Threshold | Window |
+|---|---|---|
+| Speed-camera tickets | 16 or more | trailing 12 months |
+| Speed-related license points | 11 or more | trailing 18 months |
+| Warning band | within 2 tickets or 2 points below either threshold | same windows |
 
+A driver who meets either threshold is a super speeder. Warning-band drivers are reported with how many tickets or points remain until the threshold.
 
-## Task
-- Design a working end to end system that can execute the following:
-- Ingest historical data of traffic and speeding tickets
-- Combine updated data with historical data, without duplicates
-- Generate dataset lists of license plates and drivers ids that trigger the ISA threshold
-- Display the results in a dashboard
-- Trigger an email sending list of plates and driver as a CSV
+These match the bill as amended (S4045C): 11 or more license points within 18 months, or 16 or more speed-camera tickets within 12 months. Windows are computed as months x 30 days and are configurable via `POINTS_WINDOW_MONTHS` and `CAMERA_TICKET_WINDOW_MONTHS`.
 
-## Deliverables
-1. Make two Output Datasets containing:
-   
- i) drivers’ table: 
-> - primary key license
-> - Type of violation
-> - how many violations
-> - Violation points
-> - county registered
+## Stack
 
- ii) vehicle table: count
-> - primary key
-> - primary key license
-> - number of violations
-> - county where the vehicle is registered
-- Total # drivers who currently trigger 11+ points in 24 month trailing window
-- Total # plates who currently trigger 16 tickets in 12 month trailing window
-4. Basic visual dashboard to display information and/or export CSV
-5. Email alert system sent to: 1. The violator 2. Vendor 3. DMV
-- Total # plates who, over the previous 12 month trailing window, who have triggered the list in November
-- Total # drivers who, over the previous 24 month trailing window, who have triggered the list in November
-- Warning systems for those that are just below the threshold and about to commit the violation
-- Only send list of plates and drivers that are new and triggered the threshold
-6. Presentation: Audience are technocrats for legislative processes and policy staff members
-  
-BONUS: 
-- Create small database files for the offenders (bonus)
-- Generate new visualizations and actionable insights for DMV officers
-- Deploy as a web app
+- **DuckDB** is the warehouse and the query engine for all detection logic.
+- **Polars** is a declared dependency and was used in the starter notebook for data access; the upload/cleaning module (`backend/src/cleaning.py`) uses **pandas**.
+- **FastAPI + Uvicorn + Jinja2** serve the web app; pytest tests are in `backend/tests/`.
+- Python 3.10+, managed with `uv`.
 
-***
-## How to Set up environment for the Hackathon:
->
->
+## How to run
 
+```bash
+uv sync                      # or: pip install -e .
+uv run python backend/app.py # serves http://localhost:8000
+```
 
-***
+Then open <http://localhost:8000> and upload CSVs. The sample CSVs and DuckDB file described in `docs/DATA.md` are not committed to the branch (upstream removed seed data), so you must supply your own speed-camera and violation CSVs. Tests: `uv run pytest backend/tests`.
 
-## Hackathon Day Schedule (10 AM – 6 PM)
+Further docs: `docs/BACKEND.md`, `docs/FRONTEND.md`, `docs/DATA.md`, `docs/NOTEBOOKS.md`.
 
-### 10:00 – 10:30 AM  
-- Registration & Check-In  
-- Volunteers at desk
-- Coffee & light snack
+## Contributions
 
-### 10:30 – 11:00 AM  
-- Kickoff & Welcome  
-- Intro to schedule, rules, deliverables  
-- Quick orientation on data
-- Introduce captains, volunteers, and judges  
+Abhiram Kandadi built the detection logic and policy threshold implementation. Shrikar Swami built the backend and dashboard UI. Commits are under Shrikar's account because we paired over VS Code Remote on a single machine during the event.
 
-### 11:00 – 1:00 PM  
-- Hacking Session #1: If there is enough participants, Split two teams competing with each other
-- Teams brainstorm, form groups (if not pre-formed)  
-- Mentors circulate to assist  
-- Pacers check on setup 
+1st place, DSSG-NYC Transportation Safety Hackathon, December 2025.
 
-### 1:00 – 2:00 PM  
-- Lunch & Networking  
-- Relax and mingle with other participants and mentors  
+## Upstream attribution
 
-### 2:00 – 4:30 PM  
-- Hacking Session #2  
-- Focused development sprint  
-- Pacers check teams’ progress and encourage testing  
-- Organizers keep reminding about deliverables submission process  
-
-### 4:30 – 5:00 PM  
-- Break
-
-### 5:00 – 6:00 PM  
-- Submission Deadline Reminder & Final Touches  
-- Timekeeper announces countdown (15 min left, 5 min left, final submission call)  
-- Collect all project links (Google Form/Devpost/etc.)  
-
-### 6:00 – 6:30 PM  
-- Project Demos & Judging  
-- Each team presents demo (5 mins each, adjust if many teams)  
-- Judges score based on criteria: Innovation, Impact, Functionality, Presentation    
-- Winners Announced & Group Thank You  
-- Prizes awarded, photos taken, closing remarks  
-
-***
-
-## Celebration
-
-### 6:30 PM – onwards  
-- **Happy Hour at local bar**  
-- Casual networking, celebration of winners, and socializing after event  
-
-***
-
-***
-
-## Pre-Hackathon Preparations Checklist
-
-### Venue and Logistics
-- Confirm venue booking (size large enough for teams, strong Wi-Fi, power supply, breakout areas).  
-- Test **internet bandwidth** and ensure guest Wi-Fi credentials.  
-- Arrange **tables, seating, and power strips** (at least 1 outlet per participant).  
-- Order **A/V equipment**, microphones, projectors, and screens.  
-- Prepare **check-in desk** setup: tables, lanyards/badges, pens, markers.  
-- Print **signage** for directions (restrooms, food area, hackathon space).  
-
-### Food & Beverages
-- Order **meal catering** (breakfast, lunch, dinner if longer event, snacks).  
-- Arrange **coffee/tea station** and water refill stations.  
-- Consider **dietary needs** (vegetarian, vegan, gluten-free, halal/kosher options).  
-
-### Sponsorship & Budget
-- Finalize **sponsors** (API credits, prizes, food, venue).  
-- Prepare **budget breakdown**: venue, food, swag, printing, prizes.  
-- Order **prizes** (gift cards, tech gadgets, mentorship sessions).  
-
-### Volunteers & Staff
-- Recruit **volunteers** for registration, logistics, and team support.  
-- Assign **mentors/tech helpers** 
-- Designate **judges** (partners, sponsors, technical experts).  
-- Train volunteers on **registration flow** and **timekeeping process**.  
-
-### Marketing & Communication
-- Launch **event website or registration portal**.  
-- Confirm participant registrations and waitlist.  
-- Send **pre-event email** with details: schedule, APIs, rules, starter kit links.  
-- Create a **Slack server** for participant communication.  
-
-### Judging & Deliverables
-- Define **judging criteria** (e.g. Innovation, Functionality, Impact, Technical Implementation, Presentation).  
-- Create a **submission form** (Devpost, Google Forms, or GitHub submission guidelines).  
-- Prepare **presentation schedule** for final demos.  
-
-***
-
-
+This repository is a fork of [ShrikarSwami/stop-super-speeders-hackathon-Shrikar](https://github.com/ShrikarSwami/stop-super-speeders-hackathon-Shrikar). Full upstream history is preserved unchanged. Only this README differs from upstream. The original README (event brief, task list, schedule) is available in the upstream repo and in this fork's history.
