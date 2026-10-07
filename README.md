@@ -2,6 +2,8 @@
 
 A dashboard that flags New York drivers who would trigger mandatory Intelligent Speed Assistance (ISA, "speed limiter") installation under NY bill [A.2299 / S.4045](https://www.nysenate.gov/legislation/bills/2025/S4045/amendment/A), and surfaces drivers who are close to the line. It was built for the **DSSG-NYC Transportation Safety Hackathon** (Families for Safe Streets), where it took **1st place** (December 2025).
 
+**Demo video:** https://www.youtube.com/watch?v=ptsiaKKCn2o
+
 > **Branches:** the dashboard code is on the default branch, `quackhacks`. A UI-only earlier version is on `demo_ui`, and `main` holds the original hackathon starter material (task brief, notebook, point-value seeds).
 
 ## What the dashboard does
